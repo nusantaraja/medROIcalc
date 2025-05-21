@@ -10,21 +10,15 @@ import numpy as np
 from datetime import datetime
 import streamlit as st
 
-# Setup locale untuk format angka dengan fallback yang lebih baik
-for loc in ['id_ID.UTF-8', 'en_US.UTF-8', 'en_US.utf8', 'C.UTF-8', 'C']:
-    with suppress(locale.Error):
-        locale.setlocale(locale.LC_ALL, loc)
-        break
-else:
-    st.warning("Locale setting failed, using fallback number formatting")
+# Setup locale untuk format angka
+try:
+    locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
+except locale.Error:
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def format_currency(amount):
     """Format angka ke mata uang IDR dengan pemisah ribuan"""
-    try:
-        return locale.currency(amount, symbol=True, grouping=True, international=False)
-    except:
-        # Fallback manual jika locale tidak berfungsi
-        return f"Rp {amount:,.0f}".replace(",", ".")
+    return locale.currency(amount, symbol=True, grouping=True, international=False)
 
 def calculate_roi(investment, annual_gain, years):
     """Hitung ROI dalam persen untuk X tahun"""
