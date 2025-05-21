@@ -5,14 +5,15 @@
 
 import os
 import locale
+from contextlib import suppress  # <-- INI IMPORT YANG DIBUTUHKAN
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 import streamlit as st
 
-# Setup locale untuk format angka dengan fallback yang lebih baik
+## Setup locale untuk format angka dengan fallback yang lebih baik
 for loc in ['id_ID.UTF-8', 'en_US.UTF-8', 'en_US.utf8', 'C.UTF-8', 'C']:
-    with suppress(locale.Error):
+    with suppress(locale.Error):  # <-- SEKARANG INI AKAN BERFUNGSI
         locale.setlocale(locale.LC_ALL, loc)
         break
 else:
