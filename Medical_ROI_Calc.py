@@ -72,8 +72,8 @@ def generate_charts(data):
     fig2, ax2 = plt.subplots(figsize=(10, 5))
     categories = ["Staff Admin", "No-Show", "Total Penghematan Tahunan"] # More descriptive
     savings = [
-        data["staff_savings"] * 12,
-        data["noshow_savings"] * 12,
+        data["staff_savings_monthly"] * 12,
+        data["noshow_savings_monthly"] * 12,
         data["annual_savings"]
     ]
     bars = ax2.bar(categories, savings, color=["#27AE60", "#F1C40F", "#E74C3C"])
