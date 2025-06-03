@@ -60,7 +60,7 @@ def generate_charts(data):
     # Grafik Proyeksi Arus Kas
     fig1, ax1 = plt.subplots(figsize=(10, 5))
     months = 60
-    cumulative = [data["monthly_savings"] * m - data["total_investment"] for m in range(1, months + 1)]
+    cumulative = [data["total_monthly_savings"] * m - data["total_investment"] for m in range(1, months + 1)]
     ax1.plot(range(1, months + 1), cumulative, color="#2E86C1", linewidth=2)
     ax1.set_title("PROYEKSI ARUS KAS KUMULATIF 5 TAHUN")
     ax1.set_xlabel("Bulan")
