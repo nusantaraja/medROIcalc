@@ -83,7 +83,7 @@ def generate_charts(data):
     # Add labels to bars
     for bar in bars:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va=\'bottom\', ha=\'center\') # Use format_currency
+        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va='bottom', ha='center') # Use format_currency
     figs.append(fig2)
 
     return figs
