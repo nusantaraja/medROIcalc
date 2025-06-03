@@ -86,9 +86,7 @@ def generate_charts(data):
     ax2.set_ylabel("Jumlah Penghematan (IDR)")
     ax2.grid(True, axis="y", linestyle="--", alpha=0.6)
     for bar in bars:
-        yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va=\'bottom\', ha=\'center\')
-    figs.append(fig2)
+        yval = bar.get_height()        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va='bottom', ha='center')  figs.append(fig2)
 
     return figs
 
