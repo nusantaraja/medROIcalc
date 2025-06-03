@@ -10,3 +10,6 @@ google-auth-oauthlib>=0.4.1
 
 gspread>=5.0.0
 
+
+fpdf2>=2.7.0 # For PDF generation
+
