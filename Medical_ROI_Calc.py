@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Kalkulator ROI 5 Tahun untuk Implementasi AI Voice di Rumah Sakit
 # Created by: Medical Solutions
-# Versi Streamlit 2.1 (2024) - Integrated with Google Sheets/Drive
+# Versi Streamlit 2.2 (2024) - Fixed Syntax Errors
 
 import streamlit as st
 from datetime import datetime
@@ -93,25 +93,26 @@ def generate_pdf_report(report_data, consultant_info, figs):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    
+
     # Add CJK font (ensure font file exists)
     try:
-        pdf.add_font("NotoSansCJK", fname="/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc")
-        pdf.set_font("NotoSansCJK", size=10)
+        # Use a known existing font path for broader compatibility if NotoSansCJK is missing
+        pdf.add_font("DejaVu", fname="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+        pdf.set_font("DejaVu", size=10)
     except RuntimeError:
-        st.warning("Font NotoSansCJK tidak ditemukan. Menggunakan font standar.")
+        st.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
         pdf.set_font("Arial", size=10)
 
     # Title
     pdf.set_font_size(16)
-    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data['hospital_name']}", ln=True, align=\'C\')
+    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data['hospital_name']}", ln=True, align='C')
     pdf.set_font_size(10)
-    pdf.cell(0, 5, f"Tanggal Dibuat: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align=\'C\')
+    pdf.cell(0, 5, f"Tanggal Dibuat: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
     pdf.ln(10)
 
     # Consultant Info
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Informasi Konsultan", ln=True, border=\'B\')
+    pdf.cell(0, 8, "Informasi Konsultan", ln=True, border='B')
     pdf.set_font_size(10)
     pdf.cell(0, 6, f"Nama: {consultant_info['name']}", ln=True)
     pdf.cell(0, 6, f"Email: {consultant_info['email']}", ln=True)
@@ -120,7 +121,7 @@ def generate_pdf_report(report_data, consultant_info, figs):
 
     # Hospital Info
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Informasi Rumah Sakit", ln=True, border=\'B\')
+    pdf.cell(0, 8, "Informasi Rumah Sakit", ln=True, border='B')
     pdf.set_font_size(10)
     pdf.cell(0, 6, f"Nama: {report_data['hospital_name']}", ln=True)
     pdf.cell(0, 6, f"Lokasi: {report_data['hospital_location']}", ln=True)
@@ -128,23 +129,23 @@ def generate_pdf_report(report_data, consultant_info, figs):
 
     # Key Metrics
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Hasil Utama Analisis ROI", ln=True, border=\'B\')
+    pdf.cell(0, 8, "Hasil Utama Analisis ROI", ln=True, border='B')
     pdf.set_font_size(10)
     pdf.cell(95, 7, "Investasi Awal:", border=1)
-    pdf.cell(95, 7, format_currency(report_data["total_investment"]), border=1, ln=True, align=\'R\')
+    pdf.cell(95, 7, format_currency(report_data["total_investment"]), border=1, ln=True, align='R')
     pdf.cell(95, 7, "Penghematan Tahunan:", border=1)
-    pdf.cell(95, 7, format_currency(report_data["annual_savings"]), border=1, ln=True, align=\'R\')
+    pdf.cell(95, 7, format_currency(report_data["annual_savings"]), border=1, ln=True, align='R')
     pdf.cell(95, 7, "ROI 1 Tahun:", border=1)
-    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 1):.1f}%", border=1, ln=True, align=\'R\')
+    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 1):.1f}%", border=1, ln=True, align='R')
     pdf.cell(95, 7, "ROI 5 Tahun:", border=1)
-    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 5):.1f}%", border=1, ln=True, align=\'R\')
+    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 5):.1f}%", border=1, ln=True, align='R')
     pdf.cell(95, 7, "Periode Pengembalian (Bulan):", border=1)
-    pdf.cell(95, 7, f"{report_data['payback_period']:.1f}" if report_data['payback_period'] != float('inf') else "N/A", border=1, ln=True, align=\'R\')
+    pdf.cell(95, 7, f"{report_data['payback_period']:.1f}" if report_data['payback_period'] != float('inf') else "N/A", border=1, ln=True, align='R')
     pdf.ln(5)
 
     # Detail Perhitungan
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Detail Perhitungan", ln=True, border=\'B\')
+    pdf.cell(0, 8, "Detail Perhitungan", ln=True, border='B')
     pdf.set_font_size(10)
     pdf.cell(0, 6, "Komponen Penghematan Tahunan:", ln=True)
     pdf.cell(0, 6, f"  - Pengurangan biaya staff: {format_currency(report_data['staff_savings'] * 12)}", ln=True)
@@ -159,20 +160,22 @@ def generate_pdf_report(report_data, consultant_info, figs):
 
     # Add Charts
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Visualisasi Data", ln=True, border=\'B\')
+    pdf.cell(0, 8, "Visualisasi Data", ln=True, border='B')
     pdf.set_font_size(10)
     pdf.ln(5)
     chart_paths = []
     for i, fig in enumerate(figs):
         chart_path = f"/tmp/chart_{i}.png"
-        fig.savefig(chart_path, bbox_inches=\'tight\')
+        # Use bbox_inches='tight' for saving charts correctly
+        fig.savefig(chart_path, bbox_inches='tight')
         chart_paths.append(chart_path)
         pdf.image(chart_path, x=None, y=None, w=180)
         pdf.ln(5)
         plt.close(fig) # Close the figure to free memory
 
     # Return PDF content as bytes
-    return pdf.output(dest=\'S\').encode(\'latin-1\')
+    # Use 'latin-1' encoding as FPDF output is bytes in this encoding
+    return pdf.output(dest='S').encode('latin-1')
 
 # ====================== TAMPILAN STREAMLIT ======================
 
