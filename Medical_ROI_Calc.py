@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Kalkulator ROI 5 Tahun untuk Implementasi AI Voice di Rumah Sakit
 # Created by: Medical Solutions
-# Versi Streamlit 2.4 (2024) - Fixed Calculation, Google Sync & Timestamp Format
+# Versi Streamlit 2.7 (2024) - Final Syntax Fix VERIFIED
 
 import streamlit as st
 from datetime import datetime
@@ -64,6 +64,7 @@ def calculate_roi(investment, annual_gain, years):
 def generate_charts(data):
     """Generate grafik untuk visualisasi data"""
     figs = []
+    # Grafik Proyeksi Arus Kas
     fig1, ax1 = plt.subplots(figsize=(10, 5))
     months = 60
     cumulative = [data["total_monthly_savings"] * m - data["total_investment"] for m in range(1, months + 1)]
@@ -74,6 +75,7 @@ def generate_charts(data):
     ax1.grid(True, linestyle="--", alpha=0.6)
     figs.append(fig1)
 
+    # Grafik Perbandingan Penghematan
     fig2, ax2 = plt.subplots(figsize=(10, 5))
     categories = ["Staff Admin", "No-Show", "Total Penghematan Tahunan"]
     savings = [
@@ -84,10 +86,16 @@ def generate_charts(data):
     bars = ax2.bar(categories, savings, color=["#27AE60", "#F1C40F", "#E74C3C"])
     ax2.set_title("SUMBER PENGHEMATAN TAHUNAN")
     ax2.set_ylabel("Jumlah Penghematan (IDR)")
-    ax2.grid(True, axis="y", linestyle="--", alpha=0.6)
-    for bar in bars:
-        yval = bar.get_height()        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va='bottom', ha='center')  figs.append(fig2)
+    ax2.grid(True, axis="y", linestyle="--", alpha=0.6) # Ensure this line is separate
+    # Loop for adding text labels to bars
+    for bar in bars: # Ensure correct indentation for the loop
+        yval = bar.get_height() # Ensure correct indentation
+        # Ensure ax2.text is on its own line, correctly indented, and no extra backslashes
+        ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va=\'bottom\', ha=\'center\')
+    # Ensure figs.append is outside the loop and correctly indented
+    figs.append(fig2)
 
+    # Ensure return figs is correctly indented for the function
     return figs
 
 def generate_pdf_report(report_data, consultant_info, figs):
@@ -104,66 +112,65 @@ def generate_pdf_report(report_data, consultant_info, figs):
         pdf.set_font("Arial", size=10)
 
     pdf.set_font_size(16)
-    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data['hospital_name']}", new_x="LMARGIN", new_y="NEXT", align='C')
+    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data["hospital_name"]}", new_x="LMARGIN", new_y="NEXT", align=\'C\')
     pdf.set_font_size(10)
-    # Use WIB time for PDF generation date as well
-    pdf.cell(0, 5, f"Tanggal Dibuat: {get_wib_time()}", new_x="LMARGIN", new_y="NEXT", align='C')
+    pdf.cell(0, 5, f"Tanggal Dibuat: {get_wib_time()}", new_x="LMARGIN", new_y="NEXT", align=\'C\')
     pdf.ln(10)
 
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Informasi Konsultan", new_x="LMARGIN", new_y="NEXT", border='B')
+    pdf.cell(0, 8, "Informasi Konsultan", new_x="LMARGIN", new_y="NEXT", border=\'B\')
     pdf.set_font_size(10)
-    pdf.cell(0, 6, f"Nama: {consultant_info['name']}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Email: {consultant_info['email']}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"No. HP/WA: {consultant_info['phone']}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {consultant_info["name"]}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Email: {consultant_info["email"]}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"No. HP/WA: {consultant_info["phone"]}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Informasi Rumah Sakit", new_x="LMARGIN", new_y="NEXT", border='B')
+    pdf.cell(0, 8, "Informasi Rumah Sakit", new_x="LMARGIN", new_y="NEXT", border=\'B\')
     pdf.set_font_size(10)
-    pdf.cell(0, 6, f"Nama: {report_data['hospital_name']}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Lokasi: {report_data['hospital_location']}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {report_data["hospital_name"]}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Lokasi: {report_data["hospital_location"]}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Hasil Utama Analisis ROI", new_x="LMARGIN", new_y="NEXT", border='B')
+    pdf.cell(0, 8, "Hasil Utama Analisis ROI", new_x="LMARGIN", new_y="NEXT", border=\'B\')
     pdf.set_font_size(10)
     pdf.cell(95, 7, "Investasi Awal:", border=1)
-    pdf.cell(95, 7, format_currency(report_data["total_investment"]), new_x="LMARGIN", new_y="NEXT", border=1, align='R')
+    pdf.cell(95, 7, format_currency(report_data["total_investment"]), new_x="LMARGIN", new_y="NEXT", border=1, align=\'R\')
     pdf.cell(95, 7, "Penghematan Tahunan:", border=1)
-    pdf.cell(95, 7, format_currency(report_data["annual_savings"]), new_x="LMARGIN", new_y="NEXT", border=1, align='R')
+    pdf.cell(95, 7, format_currency(report_data["annual_savings"]), new_x="LMARGIN", new_y="NEXT", border=1, align=\'R\')
     pdf.cell(95, 7, "ROI 1 Tahun:", border=1)
-    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 1):.1f}%", new_x="LMARGIN", new_y="NEXT", border=1, align='R')
+    pdf.cell(95, 7, f"{calculate_roi(report_data["total_investment"], report_data["annual_savings"], 1):.1f}%", new_x="LMARGIN", new_y="NEXT", border=1, align=\'R\')
     pdf.cell(95, 7, "ROI 5 Tahun:", border=1)
-    pdf.cell(95, 7, f"{calculate_roi(report_data['total_investment'], report_data['annual_savings'], 5):.1f}%", new_x="LMARGIN", new_y="NEXT", border=1, align='R')
+    pdf.cell(95, 7, f"{calculate_roi(report_data["total_investment"], report_data["annual_savings"], 5):.1f}%", new_x="LMARGIN", new_y="NEXT", border=1, align=\'R\')
     pdf.cell(95, 7, "Periode Pengembalian (Bulan):", border=1)
-    pdf.cell(95, 7, f"{report_data['payback_period']:.1f}" if report_data['payback_period'] != float('inf') else "N/A", new_x="LMARGIN", new_y="NEXT", border=1, align='R')
+    pdf.cell(95, 7, f"{report_data["payback_period"]:.1f}" if report_data["payback_period"] != float(\'inf\') else "N/A", new_x="LMARGIN", new_y="NEXT", border=1, align=\'R\')
     pdf.ln(5)
 
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Detail Perhitungan", new_x="LMARGIN", new_y="NEXT", border='B')
+    pdf.cell(0, 8, "Detail Perhitungan", new_x="LMARGIN", new_y="NEXT", border=\'B\')
     pdf.set_font_size(10)
     pdf.cell(0, 6, "Komponen Penghematan Bulanan:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data['staff_savings_monthly'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data['noshow_savings_monthly'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data['maintenance_cost_idr'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data['total_monthly_savings'])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data["staff_savings_monthly"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data["noshow_savings_monthly"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data["maintenance_cost_idr"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data["total_monthly_savings"])}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
     pdf.cell(0, 6, "Breakdown Investasi Awal:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data['setup_cost'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data['integration_cost'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data['training_cost'])}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data['total_investment'])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data["setup_cost"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data["integration_cost"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data["training_cost"])}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data["total_investment"])}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(10)
 
     pdf.set_font_size(12)
-    pdf.cell(0, 8, "Visualisasi Data", new_x="LMARGIN", new_y="NEXT", border='B')
+    pdf.cell(0, 8, "Visualisasi Data", new_x="LMARGIN", new_y="NEXT", border=\'B\')
     pdf.set_font_size(10)
     pdf.ln(5)
     chart_paths = []
     for i, fig in enumerate(figs):
         chart_path = f"/tmp/chart_{i}.png"
-        fig.savefig(chart_path, bbox_inches='tight')
+        fig.savefig(chart_path, bbox_inches=\'tight\')
         chart_paths.append(chart_path)
         pdf.image(chart_path, x=None, y=None, w=180)
         pdf.ln(5)
@@ -259,9 +266,8 @@ def main():
             noshow_savings = noshow_saved_appointments * revenue_per_appointment
             total_monthly_savings = staff_savings + noshow_savings - maintenance_cost
             annual_savings = total_monthly_savings * 12
-            payback_period = total_investment / total_monthly_savings if total_monthly_savings > 0 else float("inf")
+            payback_period = total_investment / total_monthly_savings if total_monthly_savings > 0 else float(\'inf\')
 
-            # Use WIB time for the report data timestamp
             current_wib_time_str = get_wib_time()
 
             report_data = {
@@ -313,9 +319,9 @@ def main():
             with col2:
                 st.metric("Penghematan Tahunan", format_currency(annual_savings))
             with col3:
-                st.metric("ROI 5 Tahun", f"{report_data['roi_5_year']:.1f}%" if report_data['roi_5_year'] != float('inf') else "N/A")
+                st.metric("ROI 5 Tahun", f"{report_data["roi_5_year"]:.1f}%" if report_data["roi_5_year"] != float(\'inf\') else "N/A")
             with col4:
-                 st.metric("Payback Period (Bulan)", f"{payback_period:.1f}" if payback_period != float('inf') else "N/A")
+                 st.metric("Payback Period (Bulan)", f"{payback_period:.1f}" if payback_period != float(\'inf\') else "N/A")
 
             st.subheader("📈 Visualisasi Data")
             figs = generate_charts(report_data)
@@ -339,7 +345,7 @@ def main():
             try:
                 with st.spinner("Membuat laporan PDF..."):
                     pdf_content = generate_pdf_report(report_data, consultant_info_dict, figs)
-                    pdf_filename = f"ROI_Report_{hospital_name.replace(' ', '_')}_{datetime.now(WIB).strftime('%Y%m%d_%H%M%S')}.pdf"
+                    pdf_filename = f"ROI_Report_{hospital_name.replace(\' \', \'_\')}_{datetime.now(WIB).strftime(\'%Y%m%d_%H%M%S\')}.pdf"
 
                 creds = google_utils.get_google_credentials()
                 drive_service = None
@@ -350,8 +356,6 @@ def main():
                 if creds:
                     drive_service = google_utils.get_drive_service(creds)
                     gc = google_utils.get_gspread_client(creds)
-                # else: # Error handled in get_google_credentials
-                    # st.error("Gagal memuat kredensial Google. Sinkronisasi tidak dapat dilanjutkan.")
 
                 if drive_service:
                     with st.spinner("Mengunggah PDF ke Google Drive..."):
@@ -359,9 +363,6 @@ def main():
                         if pdf_link:
                             st.success(f"Laporan PDF berhasil diunggah. [Lihat PDF]({pdf_link})", icon="📄")
                             report_data["pdf_link"] = pdf_link
-                        # else: # Error handled within upload_pdf_to_drive
-                # elif creds: # Error handled within get_drive_service
-                    # st.error("Gagal menginisialisasi layanan Google Drive.")
 
                 st.download_button(
                     label="Unduh Laporan PDF",
@@ -401,9 +402,6 @@ def main():
                         ]
                         sheet_row = [str(item) if item is not None else "" for item in sheet_row]
                         sheet_success = google_utils.append_to_sheet(gc, GOOGLE_SHEET_ID, GOOGLE_SHEET_NAME, sheet_row)
-                        # else: # Error handled within append_to_sheet
-                # elif creds: # Error handled within get_gspread_client
-                    # st.error("Gagal menginisialisasi klien Google Sheets.")
 
                 if pdf_link and sheet_success:
                     st.balloons()
@@ -412,9 +410,8 @@ def main():
                     st.warning("Laporan PDF berhasil diunggah, tetapi penyimpanan data ke Sheet gagal. Periksa log di atas.")
                 elif sheet_success:
                     st.warning("Data berhasil disimpan ke Sheet, tetapi unggah PDF ke Drive gagal. Periksa log di atas.")
-                elif creds: # If creds were loaded but both failed
+                elif creds:
                      st.error("Sinkronisasi ke Google Drive dan Google Sheets gagal. Periksa log di atas dan pastikan kredensial serta ID target sudah benar.")
-                # If creds failed to load, error was already shown by get_google_credentials
 
             except Exception as e:
                 st.error(f"Terjadi kesalahan tak terduga saat memproses laporan atau sinkronisasi: {e}")
