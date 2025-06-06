@@ -146,21 +146,33 @@ def generate_pdf_report(report_data, consultant_info, figs):
         regular_font_path = f"{font_path_base}DejaVuSans.ttf"
         if os.path.exists(regular_font_path):
             font_family = "DejaVu" # Jika ada, kita akan pakai keluarga DejaVu
-        # Daftarkan font regular (ini pasti berhasil karena sudah dicek)
-        pdf.add_font(font_family, "", regular_font_path, uni=True)
-        # Cek dan daftarkan varian BOLD jika ada
-        bold_font_path = f"{font_path_base}DejaVuSans-Bold.ttf"
-        if os.path.exists(bold_font_path):
-        # Cek dan daftarkan varian ITALIC (Oblique) jika ada
-            italic_font_path = f"{font_path_base}DejaVuSans-Oblique.ttf"
-        if os.path.exists(italic_font_path):
-            pdf.add_font(font_family, "I", italic_font_path, uni=True)
-            # Cek dan daftarkan varian BOLD-ITALIC (BoldOblique) jika ada
-            bold_italic_font_path = f"{font_path_base}DejaVuSans-BoldOblique.ttf"
-            if os.path.exists(bold_italic_font_path):
-                pdf.add_font(font_family, "BI", bold_italic_font_path, uni=True)
+            try:
+                font_base_path = "fonts/ttf/"
+                pdf.add_font("DejaVu", "", f"{font_base_path}DejaVuSans.ttf", uni=True)
+                pdf.add_font("DejaVu", "B", f"{font_base_path}DejaVuSans-Bold.ttf", uni=True)
+                pdf.add_font("DejaVu", "I", f"{font_base_path}DejaVuSans-Oblique.ttf", uni=True)
+                pdf.add_font("DejaVu", "BI", f"{font_base_path}DejaVuSans-BoldOblique.ttf", uni=True)
+            except Exception as e:
+                # Jika GAGAL (misal folder/file tidak ter-upload), fallback ke Arial.
+                st.sidebar.error(f"Gagal memuat font lokal: {e}. Menggunakan Arial.")
+                font_family = "Arial"
+            
+            # Daftarkan font regular (ini pasti berhasil karena sudah dicek)
+            pdf.add_font(font_family, "", regular_font_path, uni=True)
+            # Cek dan daftarkan varian BOLD jika ada
+            bold_font_path = f"{font_path_base}DejaVuSans-Bold.ttf"
+            if os.path.exists(bold_font_path):
+                pdf.add_font(font_family, "B", bold_font_path, uni=True)
+                # Cek dan daftarkan varian ITALIC (Oblique) jika ada
+                italic_font_path = f"{font_path_base}DejaVuSans-Oblique.ttf"
+                if os.path.exists(italic_font_path):
+                    pdf.add_font(font_family, "I", italic_font_path, uni=True)
+                    # Cek dan daftarkan varian BOLD-ITALIC (BoldOblique) jika ada
+                    bold_italic_font_path = f"{font_path_base}DejaVuSans-BoldOblique.ttf"
+                    if os.path.exists(bold_italic_font_path):
+                        pdf.add_font(font_family, "BI", bold_italic_font_path, uni=True)
 
-                st.sidebar.info("Font DejaVu berhasil dimuat.")
+            st.sidebar.info("Font DejaVu berhasil dimuat.")
         else:
             # Jika font regular saja tidak ada, beri peringatan
             st.sidebar.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
@@ -169,26 +181,10 @@ def generate_pdf_report(report_data, consultant_info, figs):
         # Blok catch-all untuk keamanan, jika ada error tak terduga
         st.sidebar.error(f"Error saat setup font: {font_error}. Menggunakan Arial.")
         font_family = "Arial"
-        pdf.add_font(font_family, "B", bold_font_path, uni=True)
-        pdf.add_font("DejaVu", "", f"{font_path_base}DejaVuSans.ttf", uni=True)
-        pdf.add_font("DejaVu", "B", f"{font_path_base}DejaVuSans-Bold.ttf", uni=True)
-        # Jika tidak ada Italic, bisa gunakan regular lagi sebagai fallback
-        pdf.add_font("DejaVu", "I", f"{font_path_base}DejaVuSans-Oblique.ttf", uni=True)
-        pdf.add_font("DejaVu", "BI", f"{font_path_base}DejaVuSans-BoldOblique.ttf", uni=True)
-        
-        # Jika berhasil, set font_family untuk digunakan di seluruh dokumen
-        font_family = "DejaVu"
-        st.sidebar.info("Font DejaVu berhasil dimuat.") # Feedback
-        
-    except RuntimeError:
-        # Jika salah satu file font tidak ditemukan, fallback ke Arial.
-        # Peringatan ini akan muncul dan dokumen tetap dibuat dengan Arial.
-        st.sidebar.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
-        # font_family sudah 'Arial' secara default, jadi tidak perlu diubah.
 
     # --- Mulai Membuat Dokumen PDF ---
     pdf.set_font(font_family, style="B", size=16)
-    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data.get("hospital_name", "N/A")}", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data.get('hospital_name', 'N/A')}", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.set_font(font_family, style="", size=10)
     pdf.cell(0, 5, f"Tanggal Dibuat: {get_wib_time()}", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.ln(10)
@@ -196,16 +192,16 @@ def generate_pdf_report(report_data, consultant_info, figs):
     pdf.set_font(font_family, style="B", size=12)
     pdf.cell(0, 8, "Informasi Konsultan", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
-    pdf.cell(0, 6, f"Nama: {consultant_info.get("name", "N/A")}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Email: {consultant_info.get("email", "N/A")}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"No. HP/WA: {consultant_info.get("phone", "N/A")}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {consultant_info.get('name', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Email: {consultant_info.get('email', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"No. HP/WA: {consultant_info.get('phone', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font(font_family, style="B", size=12)
     pdf.cell(0, 8, "Informasi Rumah Sakit", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
-    pdf.cell(0, 6, f"Nama: {report_data.get("hospital_name", "N/A")}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Lokasi: {report_data.get("hospital_location", "N/A")}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {report_data.get('hospital_name', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Lokasi: {report_data.get('hospital_location', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font(font_family, style="B", size=12)
@@ -235,19 +231,19 @@ def generate_pdf_report(report_data, consultant_info, figs):
     pdf.cell(0, 8, "Detail Perhitungan", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
     pdf.cell(0, 6, "Komponen Penghematan Bulanan:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data.get("staff_savings_monthly", 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data.get("noshow_savings_monthly", 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data.get("maintenance_cost_idr", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data.get('staff_savings_monthly', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data.get('noshow_savings_monthly', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data.get('maintenance_cost_idr', 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="B")
-    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data.get("total_monthly_savings", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data.get('total_monthly_savings', 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="")
     pdf.ln(3)
     pdf.cell(0, 6, "Breakdown Investasi Awal:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data.get("setup_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data.get("integration_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data.get("training_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data.get('setup_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data.get('integration_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data.get('training_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="B")
-    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data.get("total_investment", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data.get('total_investment', 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="")
     pdf.ln(10)
 
@@ -280,7 +276,6 @@ def generate_pdf_report(report_data, consultant_info, figs):
         st.error(f"Error finalizing PDF output: {pdf_err}")
         st.code(traceback.format_exc()) # Tampilkan detail error jika terjadi
         return None
-
 # ====================== TAMPILAN STREAMLIT ======================
 
 def main():
