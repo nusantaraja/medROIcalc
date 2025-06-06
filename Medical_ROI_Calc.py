@@ -35,27 +35,35 @@ def get_wib_time():
 def setup_locale():
     """Mengatur locale untuk format angka"""
     # Attempt to set locale for Indonesian Rupiah formatting
-    for loc in ["id_ID.UTF-8", "Indonesian_Indonesia.1252", "id_ID", "ind", "Indonesian", "en_US.UTF-8", "C.UTF-8", ""]:
-        with suppress(locale.Error):
+    for loc in ["id_ID.UTF-8", "Indonesian_Indonesia.1252", "id_ID", "ind", "Indonesian"]:
+        try:
             locale.setlocale(locale.LC_ALL, loc)
-            # Check if grouping is supported with the current locale
-            test_format = locale.currency(1000, grouping=True)
-            if "." in test_format or "," in test_format:
-                return # Locale supports grouping, exit
+            # Uji apakah locale ini benar-benar bisa memformat mata uang
+            locale.currency(1000, grouping=True)
+            return True # Berhasil menemukan dan menyetel locale yang berfungsi
+        except (locale.Error, ValueError):
+            # Locale ini tidak terinstal atau tidak mendukung format mata uang, coba selanjutnya
+            continue
+    return False # Tidak ada locale yang berfungsi yang ditemukan
 
 def format_currency(amount):
     """Format angka ke mata uang IDR dengan pemisah ribuan"""
     try:
         amount = float(amount)
-        setup_locale()
-        return locale.currency(amount, symbol="Rp ", grouping=True, international=False)
     except (ValueError, TypeError):
         return "Rp 0"
-    except locale.Error:
+
+    if setup_locale():
         try:
-            return f"Rp {amount:,.0f}".replace(",", ".")
-        except:
-             return "Rp 0"
+            return locale.currency(amount, symbol="Rp ", grouping=True, international=False)
+        except (ValueError, locale.Error):
+            # Jika gagal bahkan setelah setup berhasil, tetap gunakan fallback
+            pass
+
+    try:
+        return f"Rp {amount:,.0f}".replace(",", ".")
+    except (ValueError, TypeError):
+        return "Rp 0"
 
 def calculate_roi(investment, annual_gain, years):
     """Hitung ROI dalam persen untuk X tahun"""
@@ -542,7 +550,7 @@ def main():
 
 # ====================== RUN APP ======================
 if __name__ == "__main__":
-    setup_locale() 
+    # Baris setup_locale() telah dihapus dari sini untuk mencegah crash saat startup
     if "google_credentials" not in st.secrets:
         st.warning("⚠️ Konfigurasi Kredensial Google tidak ditemukan di Streamlit Secrets. Fitur penyimpanan ke Google Drive/Sheets tidak akan berfungsi. Silakan tambahkan kredensial service account Google Anda dalam format TOML ke bagian `[google_credentials]` di file secrets Anda.", icon="🔒")
     main()
