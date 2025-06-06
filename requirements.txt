@@ -7,3 +7,12 @@ weasyprint>=50.0 # Using 50+ for better CSS support
 google-api-python-client>=2.0.0
 google-auth-httplib2>=0.1.0
 google-auth-oauthlib>=0.4.1
+
+gspread>=5.0.0
+
+
+fpdf2>=2.7.0 # For PDF generation
+
+
+pytz>=2023.3 # For timezone support (WIB)
+
