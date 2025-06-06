@@ -267,8 +267,8 @@ def main():
 
     # Apply CSS styles
     st.markdown('''
-    <style>
-    .stButton>button {
+    st.markdown('''
+    <style>    .stButton>button {
         background-color: #2E86C1;
         color: white;
         font-weight: bold;
