@@ -4,6 +4,7 @@
 # Created by: Medical Solutions
 # Versi Streamlit 3.1 (2024) - FINAL INDENTATION FIX
 
+import os # <-- Pastikan 'import os' ada di bagian atas file Anda
 import streamlit as st
 from datetime import datetime
 import locale
@@ -142,6 +143,33 @@ def generate_pdf_report(report_data, consultant_info, figs):
         # Menambahkan semua varian font DejaVu. fpdf2 akan secara otomatis
         # menggunakan file yang tepat saat style B/I/BI dipanggil.
         font_path_base = "/usr/share/fonts/truetype/dejavu/"
+        regular_font_path = f"{font_path_base}DejaVuSans.ttf"
+        if os.path.exists(regular_font_path):
+            font_family = "DejaVu" # Jika ada, kita akan pakai keluarga DejaVu
+        # Daftarkan font regular (ini pasti berhasil karena sudah dicek)
+        pdf.add_font(font_family, "", regular_font_path, uni=True)
+        # Cek dan daftarkan varian BOLD jika ada
+        bold_font_path = f"{font_path_base}DejaVuSans-Bold.ttf"
+        if os.path.exists(bold_font_path):
+        # Cek dan daftarkan varian ITALIC (Oblique) jika ada
+            italic_font_path = f"{font_path_base}DejaVuSans-Oblique.ttf"
+        if os.path.exists(italic_font_path):
+            pdf.add_font(font_family, "I", italic_font_path, uni=True)
+            # Cek dan daftarkan varian BOLD-ITALIC (BoldOblique) jika ada
+            bold_italic_font_path = f"{font_path_base}DejaVuSans-BoldOblique.ttf"
+            if os.path.exists(bold_italic_font_path):
+                pdf.add_font(font_family, "BI", bold_italic_font_path, uni=True)
+
+                st.sidebar.info("Font DejaVu berhasil dimuat.")
+        else:
+            # Jika font regular saja tidak ada, beri peringatan
+            st.sidebar.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
+
+    except Exception as font_error:
+        # Blok catch-all untuk keamanan, jika ada error tak terduga
+        st.sidebar.error(f"Error saat setup font: {font_error}. Menggunakan Arial.")
+        font_family = "Arial"
+        pdf.add_font(font_family, "B", bold_font_path, uni=True)
         pdf.add_font("DejaVu", "", f"{font_path_base}DejaVuSans.ttf", uni=True)
         pdf.add_font("DejaVu", "B", f"{font_path_base}DejaVuSans-Bold.ttf", uni=True)
         # Jika tidak ada Italic, bisa gunakan regular lagi sebagai fallback
@@ -246,11 +274,11 @@ def generate_pdf_report(report_data, consultant_info, figs):
         pdf.cell(0, 6, "Grafik tidak dapat dibuat karena terjadi error sebelumnya.", new_x="LMARGIN", new_y="NEXT")
 
     try:
-        # Menggunakan .encode('latin-1') untuk output string di versi FPDF yang lebih tua
         pdf_output_bytes = pdf.output(dest="S").encode("latin-1")
         return pdf_output_bytes
     except Exception as pdf_err:
         st.error(f"Error finalizing PDF output: {pdf_err}")
+        st.code(traceback.format_exc()) # Tampilkan detail error jika terjadi
         return None
 
 # ====================== TAMPILAN STREAMLIT ======================
