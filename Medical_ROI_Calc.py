@@ -130,16 +130,25 @@ def generate_charts(data):
     return figs
 
 def generate_pdf_report(report_data, consultant_info, figs):
-    """Generate PDF report using FPDF."""
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+        """Generate PDF report using FPDF."""
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
 
-    try:
-        pdf.add_font("DejaVu", fname="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+        try:
+            # Menambahkan semua varian font DejaVu (Regular, Bold, Italic, BoldItalic)
+            # FPDF akan otomatis menggunakan file yang tepat saat style B/I/BI dipanggil
+            font_path_base = "/usr/share/fonts/truetype/dejavu/"
+        pdf.add_font("DejaVu", "", f"{font_path_base}DejaVuSans.ttf") # Style '' untuk regular
+        pdf.add_font("DejaVu", "B", f"{font_path_base}DejaVuSans-Bold.ttf") # Style 'B' untuk Bold
+        pdf.add_font("DejaVu", "I", f"{font_path_base}DejaVuSans-Oblique.ttf") # Style 'I' untuk Italic (seringkali 'Oblique')
+        pdf.add_font("DejaVu", "BI", f"{font_path_base}DejaVuSans-BoldOblique.ttf") # Style 'BI' untuk Bold Italic
+        # Set font awal ke regular
         pdf.set_font("DejaVu", size=10)
     except RuntimeError:
-        st.sidebar.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
+        # Jika salah satu file font tidak ditemukan, fallback ke Arial untuk semuanya.
+        # Ini memastikan aplikasi tidak crash jika font tidak lengkap di server.
+        st.sidebar.warning("Font DejaVu Sans (atau salah satu variannya) tidak ditemukan. Menggunakan font standar Arial.")
         pdf.set_font("Arial", size=10)
 
     pdf.set_font(style="B", size=16)
