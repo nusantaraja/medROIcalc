@@ -348,14 +348,16 @@ def main():
                 st.write(f"**Total Investasi: {format_currency(report_data.get('total_investment', 0))}**")
 
             st.subheader("📄 Laporan PDF & Sinkronisasi Data")
-            pdf_content = None
-            safe_hospital_name = "".join(c for c in hospital_name if c.isalnum() or c in " _-").rstrip()
-            pdf_filename = f"ROI_Report_{safe_hospital_name}_{datetime.now(WIB).strftime('%Y%m%d_%H%M%S')}.pdf"
             
+            # --- Langkah 1: Buat PDF ---
+            pdf_content = None # Inisialisasi dulu di luar try-except
             try:
-                with st.spinner("Membuat laporan PDF..."):
+                with st.spinner("Membuat laporan PDF..."): 
                     pdf_content = generate_pdf_report(report_data, consultant_info_dict, figs)
+                
                 if pdf_content:
+                    safe_hospital_name = "".join(c for c in hospital_name if c.isalnum() or c in " _-").rstrip()
+                    pdf_filename = f"ROI_Report_{safe_hospital_name}_{datetime.now(WIB).strftime('%Y%m%d_%H%M%S')}.pdf"
                     st.download_button(
                         label="📥 Unduh Laporan PDF",
                         data=pdf_content,
@@ -363,75 +365,66 @@ def main():
                         mime="application/pdf"
                     )
                 else:
-                    st.error("Gagal membuat konten PDF.")
+                    st.error("Gagal membuat konten PDF. Sinkronisasi Google tidak akan berjalan.")
+
             except Exception as pdf_gen_err:
-                st.error(f"Terjadi kesalahan saat membuat PDF: {pdf_gen_err}")
+                st.error(f"Terjadi kesalahan fatal saat membuat PDF: {pdf_gen_err}")
                 st.code(traceback.format_exc())
-                pdf_content = None
+                pdf_content = None # Pastikan pdf_content None jika ada error
 
-            creds = google_utils.get_google_credentials()
-            if not creds:
-                st.warning("Kredensial Google tidak valid. Sinkronisasi dilewati.", icon="🔒")
-            elif pdf_content:
-                drive_service = google_utils.get_drive_service(creds)
-                gc = google_utils.get_gspread_client(creds)
-                pdf_link = None
-                if drive_service:
-                    with st.spinner("Mengunggah PDF ke Google Drive..."):
-                        pdf_link = google_utils.upload_pdf_to_drive(drive_service, pdf_content, pdf_filename, GOOGLE_DRIVE_FOLDER_ID)
-                        if pdf_link:
-                            st.success(f"Laporan PDF berhasil diunggah. [Lihat PDF]({pdf_link})", icon="📄")
-                            report_data["pdf_link"] = pdf_link
-                        else:
-                            st.error("Gagal mengunggah PDF ke Google Drive.")
-                if gc:
-                    with st.spinner("Menyiapkan & menyimpan data ke Google Sheet..."):
-        # Tentukan urutan kolom sesuai header
+            # --- Langkah 2: Sinkronisasi ke Google (HANYA JIKA PDF BERHASIL DIBUAT) ---
+            if pdf_content:
+                creds = google_utils.get_google_credentials()
+                if not creds:
+                    st.warning("Kredensial Google tidak valid. Sinkronisasi ke Drive/Sheets dilewati.", icon="🔒")
+                else:
+                    # Lanjutkan sinkronisasi karena kredensial ADA dan PDF ADA
+                    drive_service = google_utils.get_drive_service(creds)
+                    gc = google_utils.get_gspread_client(creds)
+                    pdf_link = None
+                    
+                    if drive_service:
+                        with st.spinner("Mengunggah PDF ke Google Drive..."):
+                            pdf_link = google_utils.upload_pdf_to_drive(drive_service, pdf_content, pdf_filename, GOOGLE_DRIVE_FOLDER_ID)
+                            if pdf_link:
+                                st.success(f"Laporan PDF berhasil diunggah. [Lihat PDF]({pdf_link})", icon="📄")
+                                report_data["pdf_link"] = pdf_link
+                            else:
+                                st.error("Gagal mengunggah PDF ke Google Drive.")
+                    
+                    if gc:
+                        with st.spinner("Menyiapkan & menyimpan data ke Google Sheet..."):
                             sheet_keys = [
-            "timestamp", "consultant_name", "consultant_email", "consultant_phone", "hospital_name",
-            "hospital_location", "total_staff", "admin_staff", "monthly_appointments",
-            "noshow_rate_before", "avg_salary", "revenue_per_appointment", "staff_reduction_pct",
-            "noshow_reduction_pct", "exchange_rate", "setup_cost_usd", "integration_cost_usd",
-            "training_cost_usd", "maintenance_cost_idr", "total_investment", "annual_savings",
-            "payback_period", "roi_1_year", "roi_5_year", "pdf_link"
-        ]
+                                "timestamp", "consultant_name", "consultant_email", "consultant_phone", "hospital_name",
+                                "hospital_location", "total_staff", "admin_staff", "monthly_appointments",
+                                "noshow_rate_before", "avg_salary", "revenue_per_appointment", "staff_reduction_pct",
+                                "noshow_reduction_pct", "exchange_rate", "setup_cost_usd", "integration_cost_usd",
+                                "training_cost_usd", "maintenance_cost_idr", "total_investment", "annual_savings",
+                                "payback_period", "roi_1_year", "roi_5_year", "pdf_link"
+                            ]
+                            numeric_keys_to_format = {
+                                "avg_salary", "revenue_per_appointment", "exchange_rate", "setup_cost",
+                                "integration_cost", "training_cost", "maintenance_cost_idr",
+                                "total_investment", "annual_savings"
+                            }
+                            final_sheet_row = []
+                            for key in sheet_keys:
+                                value = report_data.get(key)
+                                if value is None: final_sheet_row.append("")
+                                elif value == float("inf"): final_sheet_row.append("N/A")
+                                elif key == 'consultant_phone': final_sheet_row.append(f"'{str(value)}")
+                                elif key in numeric_keys_to_format: final_sheet_row.append(format_number_for_sheet(value))
+                                else: final_sheet_row.append(str(value))
 
-        # Tentukan kolom mana saja yang butuh format angka ribuan
-        numeric_keys_to_format = {
-            "avg_salary", "revenue_per_appointment", "exchange_rate", "setup_cost",
-            "integration_cost", "training_cost", "maintenance_cost_idr",
-            "total_investment", "annual_savings"
-        }
-
-        final_sheet_row = []
-        for key in sheet_keys:
-            value = report_data.get(key)
-
-            if value is None:
-                final_sheet_row.append("")
-            elif value == float("inf"):
-                final_sheet_row.append("N/A")
-            elif key == 'consultant_phone':
-                # TAMBAHKAN TANDA KUTIP SATU (') UNTUK MEMAKSA FORMAT TEKS
-                final_sheet_row.append(f"'{str(value)}")
-            elif key in numeric_keys_to_format:
-                # GUNAKAN FUNGSI BARU UNTUK FORMAT ANGKA
-                final_sheet_row.append(format_number_for_sheet(value))
-            else:
-                # Sisanya, biarkan seperti biasa
-                final_sheet_row.append(str(value))
-
-        # Kirim data yang sudah rapi ke Google Sheet
-        if google_utils.append_to_sheet(gc, GOOGLE_SHEET_ID, GOOGLE_SHEET_NAME, HEADER_ROW, final_sheet_row):
-            st.success("Data berhasil disimpan ke Google Sheet.", icon="📝")
-            if pdf_link:
-                st.balloons()
-        else:
-            st.error("Gagal menyimpan data ke Google Sheet.")
-    elif not pdf_content:
-                st.error("Sinkronisasi Google dilewati karena PDF gagal dibuat.")
-                st.markdown("---")
-                st.caption(f"© {datetime.now().year} Medical AI Solutions | Analisis dibuat pada {get_wib_time()}")
+                            if google_utils.append_to_sheet(gc, GOOGLE_SHEET_ID, GOOGLE_SHEET_NAME, HEADER_ROW, final_sheet_row):
+                                st.success("Data berhasil disimpan ke Google Sheet.", icon="📝")
+                                if pdf_link: st.balloons()
+                            else:
+                                st.error("Gagal menyimpan data ke Google Sheet.")
+            
+            # --- Langkah 3: Footer ---
+            st.markdown("---")
+            st.caption(f"© {datetime.now().year} Medical AI Solutions | Analisis dibuat pada {get_wib_time()}")
 
 # ====================== RUN APP ======================
 if __name__ == "__main__":
