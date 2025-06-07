@@ -138,22 +138,25 @@ def generate_pdf_report(report_data, consultant_info, figs):
 
     # --- Pengaturan Font (Bagian yang Diperbaiki) ---
     # Variabel untuk menampung nama font yang akan digunakan
-    font_family = "Arial" # Default ke Arial jika DejaVu gagal
+    # --- Pengaturan Font dari Folder Lokal (VERSI FINAL) ---
+    font_family = "DejaVu"
     try:
         # Menambahkan semua varian font DejaVu. fpdf2 akan secara otomatis
         # menggunakan file yang tepat saat style B/I/BI dipanggil.
+        # Path ke folder fonts, tanpa parameter 'uni' yang sudah usang
         font_path_base = "/usr/share/fonts/truetype/dejavu/"
         regular_font_path = f"{font_path_base}DejaVuSans.ttf"
         if os.path.exists(regular_font_path):
             font_family = "DejaVu" # Jika ada, kita akan pakai keluarga DejaVu
             try:
                 font_base_path = "fonts/ttf/"
-                pdf.add_font("DejaVu", "", f"{font_base_path}DejaVuSans.ttf", uni=True)
-                pdf.add_font("DejaVu", "B", f"{font_base_path}DejaVuSans-Bold.ttf", uni=True)
-                pdf.add_font("DejaVu", "I", f"{font_base_path}DejaVuSans-Oblique.ttf", uni=True)
-                pdf.add_font("DejaVu", "BI", f"{font_base_path}DejaVuSans-BoldOblique.ttf", uni=True)
+                pdf.add_font("DejaVu", "", f"{font_base_path}DejaVuSans.ttf")
+                pdf.add_font("DejaVu", "B", f"{font_base_path}DejaVuSans-Bold.ttf")
+                pdf.add_font("DejaVu", "I", f"{font_base_path}DejaVuSans-Oblique.ttf")
+                pdf.add_font("DejaVu", "BI", f"{font_base_path}DejaVuSans-BoldOblique.ttf")
             except Exception as e:
                 # Jika GAGAL (misal folder/file tidak ter-upload), fallback ke Arial.
+                # Fallback jika ada masalah tak terduga
                 st.sidebar.error(f"Gagal memuat font lokal: {e}. Menggunakan Arial.")
                 font_family = "Arial"
             
