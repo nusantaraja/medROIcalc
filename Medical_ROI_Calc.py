@@ -22,6 +22,14 @@ GOOGLE_SHEET_ID = "1sH_ITYk7lcBDRRX9L5j_FqdQ5M3tsdvqyvDhXNgrQOE"
 GOOGLE_SHEET_NAME = "AIMedicalMarketingReport"
 GOOGLE_DRIVE_FOLDER_ID = "1WbJpJYx-ilqdJ-K3KdDshJKUP4Bbravh"
 WIB = pytz.timezone("Asia/Jakarta")
+HEADER_ROW = [
+    "Timestamp", "Consultant Name", "Consultant Email", "Consultant Phone", "Hospital Name",
+    "Hospital Location", "Total Staff", "Admin Staff", "Monthly Appointments",
+    "No-Show Rate Before (%)", "Avg Salary (IDR)", "Revenue/Appointment (IDR)", "Staff Reduction (%)",
+    "No-Show Reduction (%)", "Exchange Rate (IDR)", "Setup Cost (USD)", "Integration Cost (USD)",
+    "Training Cost (USD)", "Maintenance Cost (IDR/Month)", "Total Investment (IDR)", "Annual Savings (IDR)",
+    "Payback Period (Months)", "ROI 1 Year (%)", "ROI 5 Year (%)", "PDF Link"
+]
 
 # ====================== FUNGSI UTAMA ======================
 
