@@ -413,6 +413,11 @@ def main():
                                 "training_cost_usd", "maintenance_cost_idr", "total_investment", "annual_savings",
                                 "payback_period", "roi_1_year", "roi_5_year", "pdf_link"
                             ]
+                            numeric_keys_to_format = {
+                                "avg_salary", "revenue_per_appointment", "exchange_rate",
+                                "maintenance_cost_idr", "total_investment", "annual_savings"
+                            }
+
                             final_sheet_row = []
                             for key in sheet_keys:
                                 value = report_data.get(key)
