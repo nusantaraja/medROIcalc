@@ -1,10 +1,8 @@
-
 #!/usr/bin/env python3
 # Kalkulator ROI 5 Tahun untuk Implementasi AI Voice di Rumah Sakit
 # Created by: Medical Solutions
 # Versi Streamlit 3.1 (2024) - FINAL INDENTATION FIX
 
-import os # <-- Pastikan 'import os' ada di bagian atas file Anda
 import streamlit as st
 from datetime import datetime
 import locale
@@ -34,21 +32,23 @@ def get_wib_time():
     return now_wib.strftime("%Y-%m-%d %H:%M:%S WIB")
 
 def setup_locale():
-    """Mengatur locale untuk format angka"""
-    # Attempt to set locale for Indonesian Rupiah formatting
+    """
+    Mengatur locale untuk format angka. Mencoba menemukan locale yang berfungsi
+    dan tidak akan crash jika tidak ada yang ditemukan.
+    """
     for loc in ["id_ID.UTF-8", "Indonesian_Indonesia.1252", "id_ID", "ind", "Indonesian"]:
         try:
             locale.setlocale(locale.LC_ALL, loc)
-            # Uji apakah locale ini benar-benar bisa memformat mata uang
             locale.currency(1000, grouping=True)
-            return True # Berhasil menemukan dan menyetel locale yang berfungsi
+            return True
         except (locale.Error, ValueError):
-            # Locale ini tidak terinstal atau tidak mendukung format mata uang, coba selanjutnya
             continue
-    return False # Tidak ada locale yang berfungsi yang ditemukan
+    return False
 
 def format_currency(amount):
-    """Format angka ke mata uang IDR dengan pemisah ribuan"""
+    """
+    Format angka ke mata uang IDR. Mencoba locale, lalu fallback ke format manual.
+    """
     try:
         amount = float(amount)
     except (ValueError, TypeError):
@@ -58,13 +58,13 @@ def format_currency(amount):
         try:
             return locale.currency(amount, symbol="Rp ", grouping=True, international=False)
         except (ValueError, locale.Error):
-            # Jika gagal bahkan setelah setup berhasil, tetap gunakan fallback
             pass
 
     try:
         return f"Rp {amount:,.0f}".replace(",", ".")
     except (ValueError, TypeError):
         return "Rp 0"
+
 
 def calculate_roi(investment, annual_gain, years):
     """Hitung ROI dalam persen untuk X tahun"""
@@ -120,7 +120,6 @@ def generate_charts(data):
 
         for bar in bars:
             yval = bar.get_height()
-            # Ensure NO backslashes before quotes and correct indentation
             ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va="bottom", ha="center", fontsize=9, color="black")
 
         figs.append(fig2)
@@ -131,63 +130,31 @@ def generate_charts(data):
     return figs
 
 def generate_pdf_report(report_data, consultant_info, figs):
-    """Generate PDF report using FPDF."""
+    """Generate PDF report using FPDF with bundled fonts."""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
 
-    # --- Pengaturan Font (Bagian yang Diperbaiki) ---
-    # Variabel untuk menampung nama font yang akan digunakan
     # --- Pengaturan Font dari Folder Lokal (VERSI FINAL) ---
     font_family = "DejaVu"
     try:
-        # Menambahkan semua varian font DejaVu. fpdf2 akan secara otomatis
-        # menggunakan file yang tepat saat style B/I/BI dipanggil.
         # Path ke folder fonts, tanpa parameter 'uni' yang sudah usang
-        font_path_base = "/usr/share/fonts/truetype/dejavu/"
-        regular_font_path = f"{font_path_base}DejaVuSans.ttf"
-        if os.path.exists(regular_font_path):
-            font_family = "DejaVu" # Jika ada, kita akan pakai keluarga DejaVu
-            try:
-                font_base_path = "fonts/ttf/"
-                pdf.add_font("DejaVu", "", f"{font_base_path}DejaVuSans.ttf")
-                pdf.add_font("DejaVu", "B", f"{font_base_path}DejaVuSans-Bold.ttf")
-                pdf.add_font("DejaVu", "I", f"{font_base_path}DejaVuSans-Oblique.ttf")
-                pdf.add_font("DejaVu", "BI", f"{font_base_path}DejaVuSans-BoldOblique.ttf")
-            except Exception as e:
-                # Jika GAGAL (misal folder/file tidak ter-upload), fallback ke Arial.
-                # Fallback jika ada masalah tak terduga
-                st.sidebar.error(f"Gagal memuat font lokal: {e}. Menggunakan Arial.")
-                font_family = "Arial"
-            
-            # Daftarkan font regular (ini pasti berhasil karena sudah dicek)
-            pdf.add_font(font_family, "", regular_font_path, uni=True)
-            # Cek dan daftarkan varian BOLD jika ada
-            bold_font_path = f"{font_path_base}DejaVuSans-Bold.ttf"
-            if os.path.exists(bold_font_path):
-                pdf.add_font(font_family, "B", bold_font_path, uni=True)
-                # Cek dan daftarkan varian ITALIC (Oblique) jika ada
-                italic_font_path = f"{font_path_base}DejaVuSans-Oblique.ttf"
-                if os.path.exists(italic_font_path):
-                    pdf.add_font(font_family, "I", italic_font_path, uni=True)
-                    # Cek dan daftarkan varian BOLD-ITALIC (BoldOblique) jika ada
-                    bold_italic_font_path = f"{font_path_base}DejaVuSans-BoldOblique.ttf"
-                    if os.path.exists(bold_italic_font_path):
-                        pdf.add_font(font_family, "BI", bold_italic_font_path, uni=True)
+        font_base_path = "fonts/ttf/"
+        pdf.add_font("DejaVu", "", f"{font_base_path}DejaVuSans.ttf")
+        pdf.add_font("DejaVu", "B", f"{font_base_path}DejaVuSans-Bold.ttf")
+        pdf.add_font("DejaVu", "I", f"{font_base_path}DejaVuSans-Oblique.ttf")
+        pdf.add_font("DejaVu", "BI", f"{font_base_path}DejaVuSans-BoldOblique.ttf")
 
-            st.sidebar.info("Font DejaVu berhasil dimuat.")
-        else:
-            # Jika font regular saja tidak ada, beri peringatan
-            st.sidebar.warning("Font DejaVu Sans tidak ditemukan. Menggunakan font standar Arial.")
-
-    except Exception as font_error:
-        # Blok catch-all untuk keamanan, jika ada error tak terduga
-        st.sidebar.error(f"Error saat setup font: {font_error}. Menggunakan Arial.")
+    except Exception as e:
+        # Fallback jika ada masalah (misal folder/file tidak ter-upload)
+        st.sidebar.error(f"Gagal memuat font lokal: {e}. Menggunakan Arial.")
         font_family = "Arial"
 
+
     # --- Mulai Membuat Dokumen PDF ---
+    
     pdf.set_font(font_family, style="B", size=16)
-    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data.get('hospital_name', 'N/A')}", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.cell(0, 10, f"Laporan Analisis ROI AI Voice - {report_data.get("hospital_name", "N/A")}", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.set_font(font_family, style="", size=10)
     pdf.cell(0, 5, f"Tanggal Dibuat: {get_wib_time()}", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.ln(10)
@@ -195,16 +162,16 @@ def generate_pdf_report(report_data, consultant_info, figs):
     pdf.set_font(font_family, style="B", size=12)
     pdf.cell(0, 8, "Informasi Konsultan", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
-    pdf.cell(0, 6, f"Nama: {consultant_info.get('name', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Email: {consultant_info.get('email', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"No. HP/WA: {consultant_info.get('phone', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {consultant_info.get("name", "N/A")}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Email: {consultant_info.get("email", "N/A")}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"No. HP/WA: {consultant_info.get("phone", "N/A")}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font(font_family, style="B", size=12)
     pdf.cell(0, 8, "Informasi Rumah Sakit", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
-    pdf.cell(0, 6, f"Nama: {report_data.get('hospital_name', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Lokasi: {report_data.get('hospital_location', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Nama: {report_data.get("hospital_name", "N/A")}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Lokasi: {report_data.get("hospital_location", "N/A")}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.set_font(font_family, style="B", size=12)
@@ -234,19 +201,19 @@ def generate_pdf_report(report_data, consultant_info, figs):
     pdf.cell(0, 8, "Detail Perhitungan", new_x="LMARGIN", new_y="NEXT", border="B")
     pdf.set_font(font_family, style="", size=10)
     pdf.cell(0, 6, "Komponen Penghematan Bulanan:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data.get('staff_savings_monthly', 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data.get('noshow_savings_monthly', 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data.get('maintenance_cost_idr', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan biaya staff: {format_currency(report_data.get("staff_savings_monthly", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  + Pengurangan kerugian no-show: {format_currency(report_data.get("noshow_savings_monthly", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pemeliharaan bulanan: {format_currency(report_data.get("maintenance_cost_idr", 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="B")
-    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data.get('total_monthly_savings', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Penghematan Bulanan Bersih: {format_currency(report_data.get("total_monthly_savings", 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="")
     pdf.ln(3)
     pdf.cell(0, 6, "Breakdown Investasi Awal:", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data.get('setup_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data.get('integration_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data.get('training_cost', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya setup: {format_currency(report_data.get("setup_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya integrasi: {format_currency(report_data.get("integration_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  - Biaya pelatihan: {format_currency(report_data.get("training_cost", 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="B")
-    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data.get('total_investment', 0))}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"  = Total Investasi Awal: {format_currency(report_data.get("total_investment", 0))}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_family, style="")
     pdf.ln(10)
 
@@ -273,12 +240,16 @@ def generate_pdf_report(report_data, consultant_info, figs):
         pdf.cell(0, 6, "Grafik tidak dapat dibuat karena terjadi error sebelumnya.", new_x="LMARGIN", new_y="NEXT")
 
     try:
-        pdf_output_bytes = pdf.output(dest="S").encode("latin-1")
+        # Langsung panggil pdf.output() tanpa parameter dan tanpa .encode()
+        # Ini adalah cara yang benar untuk versi fpdf2 modern
+        pdf_output_bytes = pdf.output()
         return pdf_output_bytes
     except Exception as pdf_err:
         st.error(f"Error finalizing PDF output: {pdf_err}")
-        st.code(traceback.format_exc()) # Tampilkan detail error jika terjadi
+        st.code(traceback.format_exc())
         return None
+
+
 # ====================== TAMPILAN STREAMLIT ======================
 
 def main():
@@ -288,7 +259,6 @@ def main():
         layout="wide"
     )
 
-    # Apply CSS styles - Ensure correct indentation within the multiline string
     st.markdown("""
     <style>
     .stButton>button {
@@ -405,7 +375,6 @@ def main():
 
             current_wib_time_str = get_wib_time()
 
-            # --- Prepare Data Dictionary (Ensure correct indentation) --- 
             report_data = {
                 "timestamp": current_wib_time_str,
                 "consultant_name": consultant_name,
@@ -446,7 +415,6 @@ def main():
                 "phone": consultant_phone
             }
 
-            # --- Display Results --- 
             st.header("📊 Hasil Analisis ROI")
             st.success("Perhitungan ROI berhasil dilakukan!")
 
@@ -476,7 +444,6 @@ def main():
                 st.error(f"Gagal membuat atau menampilkan grafik: {chart_err}")
                 figs = [] 
 
-            # --- Calculation Details Expander --- 
             with st.expander("🔍 Lihat Detail Perhitungan"): 
                 st.subheader("Komponen Penghematan Bulanan")
                 st.write(f"- Penghematan dari efisiensi staff admin: {format_currency(report_data.get("staff_savings_monthly", 0))}")
@@ -490,7 +457,6 @@ def main():
                 st.write(f"- Biaya pelatihan ({format_currency(report_data.get("training_cost_usd", 0))} USD): {format_currency(report_data.get("training_cost", 0))}")
                 st.write(f"**Total Investasi: {format_currency(report_data.get("total_investment", 0))}**")
 
-            # --- PDF Generation and Google Sync --- 
             st.subheader("📄 Laporan PDF & Sinkronisasi Data")
             pdf_content = None
             safe_hospital_name = "".join(c if c.isalnum() else "_" for c in hospital_name)
@@ -514,7 +480,6 @@ def main():
                 st.code(traceback.format_exc())
                 pdf_content = None
 
-            # --- Google Integration --- 
             creds = google_utils.get_google_credentials()
             if not creds:
                 st.warning("Kredensial Google tidak ditemukan atau tidak valid. Sinkronisasi ke Drive/Sheets dilewati.", icon="🔒")
@@ -588,14 +553,11 @@ def main():
             elif not pdf_content:
                  st.error("Sinkronisasi Google dilewati karena PDF gagal dibuat.")
 
-            # --- Footer --- 
             st.markdown("---")
             st.caption(f"© {datetime.now().year} Medical AI Solutions | Analisis dibuat pada {get_wib_time()}")
 
 # ====================== RUN APP ======================
 if __name__ == "__main__":
-    # Baris setup_locale() telah dihapus dari sini untuk mencegah crash saat startup
     if "google_credentials" not in st.secrets:
         st.warning("⚠️ Konfigurasi Kredensial Google tidak ditemukan di Streamlit Secrets. Fitur penyimpanan ke Google Drive/Sheets tidak akan berfungsi. Silakan tambahkan kredensial service account Google Anda dalam format TOML ke bagian `[google_credentials]` di file secrets Anda.", icon="🔒")
     main()
-
