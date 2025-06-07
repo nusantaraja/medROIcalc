@@ -47,16 +47,27 @@ def get_drive_service(credentials):
     return None
 
 # --- Google Sheets Operations --- 
-def append_to_sheet(gc, sheet_id, sheet_name, data_row):
-    """Appends a row of data to the specified Google Sheet."""
+def append_to_sheet(gc, sheet_id, sheet_name, header_row, data_row):
+    """
+    Appends a row of data. If the sheet is empty, it writes the header first.
+    """
     if not gc:
         st.error("Google Sheets client not available for appending data.")
         return False
     try:
         spreadsheet = gc.open_by_key(sheet_id)
         worksheet = spreadsheet.worksheet(sheet_name)
+
+        # Cek apakah sheet kosong (tidak punya baris sama sekali)
+        # get_all_values() adalah cara paling andal untuk cek ini
+        if len(worksheet.get_all_values()) == 0:
+            # Jika kosong, tulis header di baris pertama
+            worksheet.append_row(header_row, value_input_option="USER_ENTERED")
+        
+        # Selalu tambahkan data baru di baris berikutnya
         worksheet.append_row(data_row, value_input_option="USER_ENTERED")
         return True
+        
     except gspread.exceptions.APIError as e:
         st.error(f"Google Sheets API Error: {e}. Check Sheet ID & permissions.", icon="🚨")
         return False
