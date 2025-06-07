@@ -349,15 +349,19 @@ def main():
 
             st.subheader("📄 Laporan PDF & Sinkronisasi Data")
             
-            # --- Langkah 1: Buat PDF ---
-            pdf_content = None # Inisialisasi dulu di luar try-except
+            # --- Langkah 1: Siapkan Nama File & Folder Baru ---
+            date_str = datetime.now(WIB).strftime("%y%m%d")
+            # Nama dasar yang akan digunakan untuk folder dan file
+            base_name = f"{date_str} {hospital_name} {hospital_location}"
+            pdf_filename = f"{base_name}.pdf"
+
+            # --- Langkah 2: Buat PDF ---
+            pdf_content = None
             try:
                 with st.spinner("Membuat laporan PDF..."): 
                     pdf_content = generate_pdf_report(report_data, consultant_info_dict, figs)
                 
                 if pdf_content:
-                    safe_hospital_name = "".join(c for c in hospital_name if c.isalnum() or c in " _-").rstrip()
-                    pdf_filename = f"ROI_Report_{safe_hospital_name}_{datetime.now(WIB).strftime('%Y%m%d_%H%M%S')}.pdf"
                     st.download_button(
                         label="📥 Unduh Laporan PDF",
                         data=pdf_content,
@@ -370,30 +374,37 @@ def main():
             except Exception as pdf_gen_err:
                 st.error(f"Terjadi kesalahan fatal saat membuat PDF: {pdf_gen_err}")
                 st.code(traceback.format_exc())
-                pdf_content = None # Pastikan pdf_content None jika ada error
+                pdf_content = None
 
-            # --- Langkah 2: Sinkronisasi ke Google (HANYA JIKA PDF BERHASIL DIBUAT) ---
+            # --- Langkah 3: Sinkronisasi ke Google (HANYA JIKA PDF BERHASIL DIBUAT) ---
             if pdf_content:
                 creds = google_utils.get_google_credentials()
                 if not creds:
                     st.warning("Kredensial Google tidak valid. Sinkronisasi ke Drive/Sheets dilewati.", icon="🔒")
                 else:
-                    # Lanjutkan sinkronisasi karena kredensial ADA dan PDF ADA
                     drive_service = google_utils.get_drive_service(creds)
                     gc = google_utils.get_gspread_client(creds)
-                    pdf_link = None
                     
-                    if drive_service:
-                        with st.spinner("Mengunggah PDF ke Google Drive..."):
-                            pdf_link = google_utils.upload_pdf_to_drive(drive_service, pdf_content, pdf_filename, GOOGLE_DRIVE_FOLDER_ID)
+                    # --- Logika Folder & Upload Baru ---
+                    with st.spinner("Menyiapkan folder & mengunggah PDF ke Google Drive..."):
+                        # Buat atau dapatkan ID subfolder
+                        subfolder_id = google_utils.create_or_get_folder(drive_service, base_name, GOOGLE_DRIVE_FOLDER_ID)
+                        
+                        pdf_link = None
+                        if subfolder_id:
+                            # Unggah PDF ke dalam subfolder tersebut
+                            pdf_link = google_utils.upload_pdf_to_drive(drive_service, pdf_content, pdf_filename, subfolder_id)
                             if pdf_link:
-                                st.success(f"Laporan PDF berhasil diunggah. [Lihat PDF]({pdf_link})", icon="📄")
+                                st.success(f"Laporan PDF berhasil diunggah ke folder '{base_name}'. [Lihat PDF]({pdf_link})", icon="📄")
                                 report_data["pdf_link"] = pdf_link
                             else:
-                                st.error("Gagal mengunggah PDF ke Google Drive.")
-                    
+                                st.error(f"Gagal mengunggah PDF ke folder '{base_name}'.")
+                        else:
+                            st.error("Gagal membuat atau menemukan folder di Google Drive. Upload dibatalkan.")
+
+                    # --- Logika Simpan ke Sheet (sudah diperbaiki format angkanya) ---
                     if gc:
-                        with st.spinner("Menyiapkan & menyimpan data ke Google Sheet..."):
+                        with st.spinner("Menyimpan data ke Google Sheet..."):
                             sheet_keys = [
                                 "timestamp", "consultant_name", "consultant_email", "consultant_phone", "hospital_name",
                                 "hospital_location", "total_staff", "admin_staff", "monthly_appointments",
@@ -402,11 +413,6 @@ def main():
                                 "training_cost_usd", "maintenance_cost_idr", "total_investment", "annual_savings",
                                 "payback_period", "roi_1_year", "roi_5_year", "pdf_link"
                             ]
-                            numeric_keys_to_format = {
-                                "avg_salary", "revenue_per_appointment", "exchange_rate", "setup_cost",
-                                "integration_cost", "training_cost", "maintenance_cost_idr",
-                                "total_investment", "annual_savings"
-                            }
                             final_sheet_row = []
                             for key in sheet_keys:
                                 value = report_data.get(key)
@@ -422,7 +428,7 @@ def main():
                             else:
                                 st.error("Gagal menyimpan data ke Google Sheet.")
             
-            # --- Langkah 3: Footer ---
+            # --- Footer ---
             st.markdown("---")
             st.caption(f"© {datetime.now().year} Medical AI Solutions | Analisis dibuat pada {get_wib_time()}")
 

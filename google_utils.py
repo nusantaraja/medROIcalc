@@ -101,3 +101,36 @@ def upload_pdf_to_drive(drive_service, pdf_content, filename, folder_id):
         st.error(f"Error uploading PDF to Google Drive: {e}", icon="🚨")
         st.info(f"Attempted to upload '{filename}' to folder ID '{folder_id}'. Check folder ID and permissions.", icon="ℹ️")
         return None
+
+def create_or_get_folder(drive_service, folder_name, parent_folder_id):
+    """Checks if a folder exists in the parent folder. If not, creates it.
+    Returns the folder ID."""
+    if not drive_service:
+        st.error("Google Drive service not available for folder operations.")
+        return None
+    try:
+        # Query untuk mencari folder dengan nama spesifik di dalam parent folder
+        query = f"name='{folder_name}' and '{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
+        
+        response = drive_service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+        files = response.get('files', [])
+
+        if files:
+            # Jika folder sudah ada, kembalikan ID-nya
+            st.info(f"Folder '{folder_name}' sudah ada. Menggunakan folder yang ada.")
+            return files[0].get('id')
+        else:
+            # Jika folder tidak ada, buat folder baru
+            st.info(f"Membuat folder baru: '{folder_name}'...")
+            file_metadata = {
+                'name': folder_name,
+                'parents': [parent_folder_id],
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            folder = drive_service.files().create(body=file_metadata, fields='id').execute()
+            return folder.get('id')
+            
+    except Exception as e:
+        st.error(f"Error saat membuat atau mencari folder di Google Drive: {e}", icon="🚨")
+        st.code(traceback.format_exc())
+        return None
