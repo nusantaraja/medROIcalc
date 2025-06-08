@@ -82,7 +82,18 @@ def calculate_roi(investment, annual_gain, years):
 def generate_charts(data):
     """Generate grafik untuk visualisasi data."""
     figs = []
-    plt.style.use("seaborn-v0_8-whitegrid")
+    # Menggunakan style yang lebih netral terhadap tema terang/gelap
+    plt.style.use("seaborn-v0_8-whitegrid") 
+    
+    # Dapatkan warna tema dari Streamlit (meskipun ini tidak bisa diakses langsung di backend,
+    # kita set warna teks dan grid secara eksplisit agar kontras)
+    rc_params = {
+        "text.color": "#333", "axes.labelcolor": "#333", 
+        "xtick.color": "#333", "ytick.color": "#333",
+        "axes.titlecolor": "#333"
+    }
+    plt.rcParams.update(rc_params)
+
     try:
         fig1, ax1 = plt.subplots(figsize=(10, 5))
         months = 60
@@ -115,7 +126,8 @@ def generate_charts(data):
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: format_currency(x)))
         for bar in bars:
             yval = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va="bottom", ha="center", fontsize=9, color="black")
+            # Set warna teks di dalam bar agar kontras
+            ax2.text(bar.get_x() + bar.get_width()/2.0, yval, format_currency(yval), va="bottom", ha="center", fontsize=9, color="#333")
         figs.append(fig2)
     except Exception as e:
         st.error(f"Error generating savings comparison chart: {e}")
@@ -232,7 +244,49 @@ def generate_pdf_report(report_data, consultant_info, figs):
 
 def main():
     st.set_page_config(page_title="Kalkulator ROI AI Voice", page_icon="🏥", layout="wide")
-    st.markdown("""<style>.stButton>button{background-color:#2E86C1;color:white;font-weight:bold;border-radius:5px;padding:0.5rem 1rem;}.stButton>button:hover{background-color:#21618C;}.stMetric{background-color:#f0f2f6;border-left:5px solid #2E86C1;padding:15px;border-radius:5px;box-shadow:2px 2px 5px rgba(0,0,0,0.1);text-align:center;}.stTextInput label,.stNumberInput label,.stSlider label{font-weight:bold;color:#333;}.stExpander{border:1px solid #ddd;border-radius:5px;margin-top:1rem;}.stExpander header{font-weight:bold;background-color:#f0f2f6;padding:0.5rem;}</style>""", unsafe_allow_html=True)
+    
+    # --- PERUBAHAN CSS DIMULAI DI SINI ---
+    st.markdown("""
+    <style>
+    /* Menggunakan variabel tema Streamlit untuk kompatibilitas light/dark mode */
+    .stButton>button {
+        background-color: #2E86C1;
+        color: white; /* Putih selalu kontras baik dengan biru solid */
+        font-weight: bold;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+    }
+    .stButton>button:hover {
+        background-color: #21618C;
+    }
+    .stMetric {
+        background-color: var(--secondary-background-color); /* Latar belakang adaptif */
+        border-left: 5px solid #2E86C1;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    /* Mengatur warna teks label agar adaptif dengan tema */
+    .stTextInput label, .stNumberInput label, .stSlider label {
+        font-weight: bold;
+        color: var(--text-color); /* Teks adaptif */
+    }
+    .stExpander {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 1rem;
+    }
+    .stExpander header {
+        font-weight: bold;
+        background-color: var(--secondary-background-color); /* Latar belakang adaptif */
+        color: var(--text-color); /* Teks header adaptif */
+        padding: 0.5rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    # --- PERUBAHAN CSS SELESAI DI SINI ---
+
     st.title("🏥 Kalkulator ROI 5 Tahun untuk AI Voice")
     st.markdown("**Alat interaktif untuk menghitung potensi Return on Investment (ROI) dari implementasi solusi AI Voice di fasilitas kesehatan Anda.**")
     st.markdown("---")
